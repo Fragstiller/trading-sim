@@ -14,7 +14,7 @@ import type { MarketDataState } from "../shared/atoms";
 import "react-datepicker/dist/react-datepicker.css";
 import { marketDataAtom } from "../shared/atoms";
 
-export function getTimeframeStepSize(timeframe: KlineInterval): number {
+function getTimeframeStepSize(timeframe: KlineInterval): number {
   let stepSize = 60000;
   switch (timeframe) {
     case "1m":
