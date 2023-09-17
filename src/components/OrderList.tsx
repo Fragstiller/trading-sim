@@ -33,12 +33,12 @@ export default function OrderList() {
         // https://github.com/microsoft/TypeScript/issues/35124
         if (ld !== undefined && !order.close) {
           for (
-            let i = lastUpdateIndex.current + 1;
-            i < ld.ohlc.length && ld.ohlc[i][0] <= marketDataState.currentTime;
+            let i = lastUpdateIndex.current;
+            i < ld.ohlc.length && ld.ohlc[i][0] < marketDataState.currentTime;
             i++
           ) {
             if (i > newLastUpdateIndex) newLastUpdateIndex = i;
-            if (ld.ohlc[i][0] <= lastUpdateTime.current) continue;
+            if (ld.ohlc[i][0] < lastUpdateTime.current) continue;
 
             if (
               order.tp !== undefined &&

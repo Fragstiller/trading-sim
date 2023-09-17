@@ -13,6 +13,32 @@ import type { MarketDataState } from "../shared/atoms";
 
 import "react-datepicker/dist/react-datepicker.css";
 import { marketDataAtom } from "../shared/atoms";
+
+export function getTimeframeStepSize(timeframe: KlineInterval): number {
+  let stepSize = 60000;
+  switch (timeframe) {
+    case "1m":
+      stepSize = 60000;
+      break;
+    case "3m":
+      stepSize = 60000 * 3;
+      break;
+    case "5m":
+      stepSize = 60000 * 5;
+      break;
+    case "15m":
+      stepSize = 60000 * 15;
+      break;
+    case "1h":
+      stepSize = 60000 * 60;
+      break;
+    case "4h":
+      stepSize = 60000 * 60 * 4;
+      break;
+  }
+  return stepSize;
+}
+
 export default function DataLoader(props: {
   setChartOptions: React.Dispatch<React.SetStateAction<Options>>;
   chartComponentRef: React.RefObject<HighchartsReact.RefObject>;
@@ -73,7 +99,10 @@ export default function DataLoader(props: {
 
         if (ld !== undefined) {
           for (let i = ld.ohlc.length - 1; i > 0; i--) {
-            if (ld.ohlc[i][0] <= marketDataState.currentTime) {
+            if (
+              ld.ohlc[i][0] <=
+              marketDataState.currentTime - getTimeframeStepSize(timeframe)
+            ) {
               endIndex = i + 1;
               break;
             }
@@ -95,7 +124,10 @@ export default function DataLoader(props: {
 
       if (ld !== undefined) {
         for (let i = ld.ohlc.length - 1; i > 0; i--) {
-          if (ld.ohlc[i][0] <= marketDataState.currentTime) {
+          if (
+            ld.ohlc[i][0] <=
+            marketDataState.currentTime - getTimeframeStepSize(timeframe)
+          ) {
             endIndex = i + 1;
             break;
           }
@@ -119,27 +151,7 @@ export default function DataLoader(props: {
       return;
     }
 
-    let stepSize = 60000;
-    switch (marketDataState.selectedTimeframe) {
-      case "1m":
-        stepSize = 60000;
-        break;
-      case "3m":
-        stepSize = 60000 * 3;
-        break;
-      case "5m":
-        stepSize = 60000 * 5;
-        break;
-      case "15m":
-        stepSize = 60000 * 15;
-        break;
-      case "1h":
-        stepSize = 60000 * 60;
-        break;
-      case "4h":
-        stepSize = 60000 * 60 * 4;
-        break;
-    }
+    const stepSize = getTimeframeStepSize(marketDataState.selectedTimeframe);
 
     const newCurrentTime =
       marketDataState.currentTime -
@@ -198,7 +210,7 @@ export default function DataLoader(props: {
         let endIndex = -1;
         if (ld !== undefined) {
           for (let i = ld.ohlc.length - 1; i > 0; i--) {
-            if (ld.ohlc[i][0] <= newCurrentTime) {
+            if (ld.ohlc[i][0] <= newCurrentTime - stepSize) {
               endIndex = i + 1;
               break;
             }
@@ -221,7 +233,7 @@ export default function DataLoader(props: {
       let endIndex = -1;
       if (ld !== undefined) {
         for (let i = ld.ohlc.length - 1; i > 0; i--) {
-          if (ld.ohlc[i][0] <= newCurrentTime) {
+          if (ld.ohlc[i][0] <= newCurrentTime - stepSize) {
             endIndex = i + 1;
             break;
           }
@@ -263,7 +275,8 @@ export default function DataLoader(props: {
         const gap = marketDataState.currentTime - currentExtremes.max;
         chartComponentRef.current?.chart.xAxis[0].setExtremes(
           currentExtremes.min + gap,
-          marketDataState.currentTime,
+          marketDataState.currentTime -
+            getTimeframeStepSize(marketDataState.selectedTimeframe),
         );
       }
 
