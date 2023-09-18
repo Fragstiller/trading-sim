@@ -6,13 +6,14 @@ import type { Options } from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import parse from "html-react-parser";
 import { useAtom } from "jotai";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import DatePicker from "react-datepicker";
+import { createSearchParams, useSearchParams } from "react-router-dom";
 import Select from "react-select";
 import type { MarketDataState } from "../shared/atoms";
+import { marketDataAtom } from "../shared/atoms";
 
 import "react-datepicker/dist/react-datepicker.css";
-import { marketDataAtom } from "../shared/atoms";
 
 function getTimeframeStepSize(timeframe: KlineInterval): number {
   let stepSize = 60000;
@@ -44,11 +45,8 @@ export default function DataLoader(props: {
   chartComponentRef: React.RefObject<HighchartsReact.RefObject>;
 }) {
   const { setChartOptions, chartComponentRef } = props;
+  const [searchParams, setSearchParams] = useSearchParams();
   const [marketDataState, setMarketDataState] = useAtom(marketDataAtom);
-  const [availablePairs, setAvailablePairs] = useState([
-    { value: "BTCUDST", label: "BTCUSDT" },
-  ]);
-  const [selectedPair, setSelectedPair] = useState("BTCUSDT");
   const fastForwardEnabledLocal = useRef(false);
   const loadingNewData = useRef(false);
 
@@ -69,7 +67,7 @@ export default function DataLoader(props: {
       possibleTimeframes.forEach((timeframe) => {
         client
           .getKlines({
-            symbol: selectedPair,
+            symbol: marketDataState.selectedPair,
             interval: timeframe,
             endTime: marketDataState.currentTime,
           })
@@ -109,13 +107,13 @@ export default function DataLoader(props: {
           }
         }
 
-        setMarketDataState({
-          ...marketDataState,
+        setMarketDataState((prev) => ({
+          ...prev,
           endIndex,
           loadedData: loadedData,
           selectedTimeframe: timeframe,
           fastForwardEnabled: fastForwardEnabledLocal.current,
-        });
+        }));
       }, 7);
     } else if (timeframe != marketDataState.selectedTimeframe) {
       let endIndex = -1;
@@ -134,12 +132,12 @@ export default function DataLoader(props: {
         }
       }
 
-      setMarketDataState({
-        ...marketDataState,
+      setMarketDataState((prev) => ({
+        ...prev,
         endIndex,
         selectedTimeframe: timeframe,
         fastForwardEnabled: fastForwardEnabledLocal.current,
-      });
+      }));
     }
   }
 
@@ -167,9 +165,11 @@ export default function DataLoader(props: {
       possibleTimeframes.forEach((timeframe) => {
         client
           .getKlines({
-            symbol: selectedPair,
+            symbol: marketDataState.selectedPair,
             interval: timeframe,
-            startTime: marketDataState.loadedTime,
+            startTime:
+              marketDataState.loadedTime -
+              (marketDataState.loadedTime % getTimeframeStepSize(timeframe)),
             endTime: newLoadedTime,
             limit: 1000,
           })
@@ -217,14 +217,14 @@ export default function DataLoader(props: {
           }
         }
 
-        setMarketDataState({
-          ...marketDataState,
+        setMarketDataState((prev) => ({
+          ...prev,
           currentTime: newCurrentTime,
           endIndex,
           loadedTime: newLoadedTime,
           loadedData: newLoadedData,
           fastForwardEnabled: fastForwardEnabledLocal.current,
-        });
+        }));
       }, 7);
     } else {
       const ld =
@@ -240,12 +240,12 @@ export default function DataLoader(props: {
         }
       }
 
-      setMarketDataState({
-        ...marketDataState,
+      setMarketDataState((prev) => ({
+        ...prev,
         endIndex,
         currentTime: newCurrentTime,
         fastForwardEnabled: fastForwardEnabledLocal.current,
-      });
+      }));
     }
   }
 
@@ -257,11 +257,27 @@ export default function DataLoader(props: {
           pairs.push({ value: symbol.symbol, label: symbol.symbol });
         }
       });
-      setAvailablePairs(pairs);
+      setMarketDataState((prev) => ({
+        ...prev,
+        currentTime: parseInt(
+          searchParams.get("time") ?? prev.currentTime.toString(),
+        ),
+        loadedTime: parseInt(
+          searchParams.get("time") ?? prev.currentTime.toString(),
+        ),
+        selectedPair: searchParams.get("pair") ?? prev.selectedPair,
+        availablePairs: pairs,
+      }));
     });
   }, []);
 
   useEffect(() => {
+    setSearchParams(
+      createSearchParams({
+        pair: marketDataState.selectedPair,
+        time: marketDataState.currentTime.toString(),
+      }),
+    );
     if (
       marketDataState.loadedData !== undefined &&
       marketDataState.selectedTimeframe !== undefined
@@ -284,16 +300,16 @@ export default function DataLoader(props: {
         series: [
           {
             type: "candlestick",
-            id: `${selectedPair.toLowerCase()}-ohlc`,
-            name: `${selectedPair} Price`,
+            id: `${marketDataState.selectedPair.toLowerCase()}-ohlc`,
+            name: `${marketDataState.selectedPair} Price`,
             data: marketDataState.loadedData[
               marketDataState.selectedTimeframe
             ]?.ohlc.slice(0, marketDataState.endIndex),
           },
           {
             type: "column",
-            id: `${selectedPair.toLowerCase()}-volume`,
-            name: `${selectedPair} Volume`,
+            id: `${marketDataState.selectedPair.toLowerCase()}-volume`,
+            name: `${marketDataState.selectedPair} Volume`,
             data: marketDataState.loadedData[
               marketDataState.selectedTimeframe
             ]?.v.slice(0, marketDataState.endIndex),
@@ -340,11 +356,11 @@ export default function DataLoader(props: {
           disabled={marketDataState.loadedData === undefined ? false : true}
           maxDate={new Date()}
           onChange={(date) => {
-            setMarketDataState({
-              ...marketDataState,
+            setMarketDataState((prev) => ({
+              ...prev,
               currentTime: date?.getTime() ?? Date.now(),
               loadedTime: date?.getTime() ?? Date.now(),
-            });
+            }));
           }}
         ></DatePicker>
         <div className="mr-1">
@@ -367,9 +383,9 @@ export default function DataLoader(props: {
             onClick={() => {
               fastForwardEnabledLocal.current =
                 !fastForwardEnabledLocal.current;
-              setMarketDataState((current) => ({
-                ...current,
-                fastForwardEnabled: !current.fastForwardEnabled,
+              setMarketDataState((prev) => ({
+                ...prev,
+                fastForwardEnabled: !prev.fastForwardEnabled,
               }));
             }}
             className={`${
@@ -387,10 +403,18 @@ export default function DataLoader(props: {
       <Select
         className="mt-2 w-56"
         isSearchable={true}
-        options={availablePairs}
-        value={{ value: selectedPair, label: selectedPair }}
+        options={marketDataState.availablePairs}
+        value={{
+          value: marketDataState.selectedPair,
+          label: marketDataState.selectedPair,
+        }}
         isDisabled={marketDataState.loadedData === undefined ? false : true}
-        onChange={(value) => setSelectedPair(value?.value ?? "BTCUSDT")}
+        onChange={(value) =>
+          setMarketDataState((prev) => ({
+            ...prev,
+            selectedPair: value?.value ?? "BTCUSDT",
+          }))
+        }
       ></Select>
     </div>
   );

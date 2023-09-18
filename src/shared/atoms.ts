@@ -16,6 +16,8 @@ export type OrderInfo = {
 
 export type MarketDataState = {
   selectedTimeframe?: KlineInterval;
+  selectedPair: string;
+  availablePairs: { value: string; label: string }[];
   currentTime: number;
   endIndex: number;
   loadedTime: number;
@@ -29,6 +31,8 @@ export type MarketDataState = {
 };
 
 export const marketDataAtom = atom<MarketDataState>({
+  selectedPair: "BTCUSDT",
+  availablePairs: [{ value: "BTCUSDT", label: "BTCUSDT" }],
   currentTime: Date.UTC(2023, 0, 1),
   loadedTime: Date.UTC(2023, 0, 1),
   endIndex: -1,
