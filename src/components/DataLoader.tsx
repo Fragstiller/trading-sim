@@ -390,7 +390,7 @@ export default function DataLoader(props: {
             }}
             className={`${
               marketDataState.fastForwardEnabled ? "bg-gray-300" : "bg-gray-200"
-            } rounded-sm p-1 enabled:hover:bg-gray-300 disabled:bg-gray-50`}
+            } rounded-sm p-1 enabled:hover:bg-gray-300 disabled:bg-gray-100`}
           >
             {marketDataState.fastForwardEnabled
               ? parse(feather.icons["pause"].toSvg({ "stroke-width": 2 }))
