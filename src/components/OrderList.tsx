@@ -1,10 +1,15 @@
 import { useAtom } from "jotai";
 import { useEffect, useRef, useState } from "react";
+import { useLocalStorage } from "usehooks-ts";
 import { marketDataAtom, orderListAtom, type OrderInfo } from "../shared/atoms";
 
 export default function OrderList() {
   const [marketDataState] = useAtom(marketDataAtom);
   const [orderList, setOrderList] = useAtom(orderListAtom);
+  const [orderListLocalStorage, setOrderListLocalStorage] = useLocalStorage(
+    "orderList",
+    orderList,
+  );
   const lastUpdateTime = useRef(0);
   const lastUpdateIndex = useRef(0);
 
@@ -22,6 +27,19 @@ export default function OrderList() {
   if (ld !== undefined && lastUpdateIndex.current === 0) {
     lastUpdateIndex.current = ld.ohlc.length - 1;
   }
+
+  useEffect(() => {
+    if (orderListLocalStorage.length !== orderList.length) {
+      orderListLocalStorage.forEach((orderInfo) => {
+        orderInfo.close = true;
+      });
+      setOrderList(orderListLocalStorage);
+    }
+  }, []);
+
+  useEffect(() => {
+    setOrderListLocalStorage(orderList);
+  }, [orderList]);
 
   useEffect(() => {
     if (

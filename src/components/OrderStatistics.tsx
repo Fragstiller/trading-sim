@@ -2,7 +2,7 @@ import { useAtom } from "jotai";
 import { orderListAtom } from "../shared/atoms";
 
 export default function OrderStatistics() {
-  const [orderList] = useAtom(orderListAtom);
+  const [orderList, setOrderList] = useAtom(orderListAtom);
 
   let totalProfit = 0;
   let tradesWon = 0;
@@ -17,7 +17,18 @@ export default function OrderStatistics() {
 
   return (
     <div className="flex flex-col gap-2 rounded-sm border border-gray-400 bg-gray-50 p-2">
-      <div className="-my-1 text-center">Statistics</div>
+      <div className="-my-1 text-center">
+        Statistics{" "}
+        <span
+          className="text-gray-400 underline hover:cursor-pointer"
+          onClick={() => {
+            window.localStorage.clear();
+            setOrderList([]);
+          }}
+        >
+          (reset)
+        </span>
+      </div>
       <div className="border border-b-0 border-gray-400"></div>
       <div className="flex flex-col">
         <div className="flex justify-stretch border-b border-gray-200">
