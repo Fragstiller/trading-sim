@@ -58,6 +58,18 @@ export default function OrderList() {
             if (i > newLastUpdateIndex) newLastUpdateIndex = i;
             if (ld.ohlc[i][0] < lastUpdateTime.current) continue;
 
+            if (order.type === "market" && !order.executed) {
+              order.executed = true;
+              order.value = ld.ohlc[i][1];
+            } else if (
+              order.type === "limit" &&
+              !order.executed &&
+              ld.ohlc[i][2] >= order.value &&
+              ld.ohlc[i][3] <= order.value
+            ) {
+              order.executed = true;
+            }
+
             if (
               order.tp !== undefined &&
               order.executed &&
@@ -76,19 +88,7 @@ export default function OrderList() {
               order.close = true;
             }
 
-            if (order.type === "market" && !order.executed) {
-              order.executed = true;
-              order.value = ld.ohlc[i][1];
-              continue;
-            } else if (
-              order.type === "limit" &&
-              !order.executed &&
-              ld.ohlc[i][2] >= order.value &&
-              ld.ohlc[i][3] <= order.value
-            ) {
-              order.executed = true;
-              continue;
-            } else {
+            if (order.executed) {
               order.profit =
                 order.direction === "long"
                   ? (1 - order.value / ld.ohlc[i][4]) * 100
