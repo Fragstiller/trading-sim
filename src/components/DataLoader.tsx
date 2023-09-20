@@ -288,7 +288,10 @@ export default function DataLoader(props: {
         currentExtremes?.max !== undefined &&
         currentExtremes?.min !== undefined
       ) {
-        const gap = marketDataState.currentTime - currentExtremes.max;
+        const gap =
+          marketDataState.currentTime -
+          getTimeframeStepSize(marketDataState.selectedTimeframe) -
+          currentExtremes.max;
         chartComponentRef.current?.chart.xAxis[0].setExtremes(
           currentExtremes.min + gap,
           marketDataState.currentTime -
