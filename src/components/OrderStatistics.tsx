@@ -12,6 +12,7 @@ export default function OrderStatistics() {
       tradesWon++;
     }
   });
+  const avgProfit = orderList.length > 0 ? totalProfit / orderList.length : 0;
   const winrate =
     (tradesWon / (orderList.length > 0 ? orderList.length : 1)) * 100;
 
@@ -33,7 +34,7 @@ export default function OrderStatistics() {
       <div className="flex flex-col">
         <div className="flex justify-stretch border-b border-gray-200">
           <div className="w-2/3 border-r border-gray-200 text-center">
-            Total Net Profit (%)
+            Total Net Profit
           </div>
           <div
             className={`w-1/3 text-center ${
@@ -49,9 +50,27 @@ export default function OrderStatistics() {
               : "-"}
           </div>
         </div>
+        <div className="flex justify-stretch border-b border-gray-200">
+          <div className="w-2/3 border-r border-gray-200 text-center">
+            Average Profit
+          </div>
+          <div
+            className={`w-1/3 text-center ${
+              avgProfit !== 0
+                ? avgProfit > 0
+                  ? "text-green-700"
+                  : "text-red-700"
+                : "text-black"
+            }`}
+          >
+            {avgProfit !== 0
+              ? (avgProfit > 0 ? "+" : "") + (avgProfit.toFixed(2) + "%")
+              : "-"}
+          </div>
+        </div>
         <div className="flex justify-stretch">
           <div className="w-2/3 border-r border-gray-200 text-center">
-            Winrate (%)
+            Win Rate
           </div>
           <div
             className={`w-1/3 text-center ${
